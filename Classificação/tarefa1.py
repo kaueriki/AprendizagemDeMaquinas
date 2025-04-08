@@ -1,3 +1,12 @@
+# Objetivo: treinar um modelo de classificação para prever se um celular possui bateria alta ou baixa com base em suas características técnicas.
+# Escolha do algoritmo:  Random Forest, pois ele lida bem com dados numéricos e categóricos sem exigir muitas transformações.
+
+# Para rodar:
+# py -m venv venv 
+# pip install pandas
+# pip install scikit-learn
+# python .\tarefa1.pyg
+
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier

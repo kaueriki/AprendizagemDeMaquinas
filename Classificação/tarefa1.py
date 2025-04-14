@@ -35,15 +35,22 @@ print("Verificando valores nulos após a remoção:")
 print(df.isnull().sum(), "\n")
 
 # Criar a variável-alvo: classificar bateria como Alta (1) ou Baixa (0) baseado na mediana
+# Ela define o que se pretende prever ou estimar e serve como base para a construção do modelo.
+# Se a variavel-alvo battery_power for maior que a mediana a bateria será classificada como alta e se for menor que a mediana será baixa.
+
 print("Criando variável-alvo para classificação da bateria...")
 median_battery = df["battery_power"].median()
 df["high_battery"] = (df["battery_power"] > median_battery).astype(int)
 print("Variável-alvo criada com sucesso!\n")
+print("Visualizando as primeiras linhas do dataset:")
+print(df.head(), "\n")
 
 # Remover a coluna 'battery_power' para evitar vazamento de dados
 print("Removendo a coluna 'battery_power'...")
 df.drop(columns=["battery_power"], inplace=True)
 print("Coluna 'battery_power' removida!\n")
+print("Visualizando as primeiras linhas do dataset:")
+print(df.head(), "\n")
 
 # Separar variáveis independentes e dependentes
 print("Separando variáveis independentes (X) e dependentes (y)...")
@@ -92,7 +99,6 @@ print(classification_report(y_test, y_pred))
 
 # Novo celular para prever a bateria alta ou baixa
 novo_celular = {
-    'battery_power': 1500,  # Potência da bateria (em mAh)
     'blue': 1,              # Bluetooth (1 ou 0)
     'clock_speed': 2.2,     # Velocidade do processador (GHz)
     'dual_sim': 1,          # Dual SIM (1 ou 0)

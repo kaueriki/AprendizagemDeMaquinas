@@ -2,8 +2,7 @@
 # métricas de avaliação: Mean Squared Error e Root Mean Squared Error
 
 #base de dados : time series
-# Peguei uma base de dados com valores de vendas de caminhões
-
+# Peguei uma base de dados com valores sazonal de vendas de caminhões
 # Serie temporal:
 # Prever valore futuros
 # Preparação de dados: Cada registro contém uma certa quanridade de valores anteriores
@@ -11,12 +10,18 @@
 # Valor de lag: Vai depende do tamaho da temporada, se não tem repetição tem que ficar testando.
 # https://dontpad/aprendizagem_maquina
 # não usar skforecast para, só se for estacionario
+# Foi utilizado o modelo Arima Autoregressivo integrated Média average
+
+# Objetivo: Prever vendas de caminhões ao longo do tempo
+# Tratamento de dados: A coluna "Month-Year" foi convertida para o tipo datetime, para servir como index e garantir que a série fique em ordem cronológica
+# A base era limpa, então não houve necessidade de padronizar ou prrencher colunas de dados ausentes
+# Algoritmo: Foi utilizado Sarima pois a serie não é estacionária e sim sazonal, e tem apenas uma variável externa
 
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from statsmodels.tsa.arima.model import ARIMA
-from sklearn.metrics import mean_squared_error, mean_absolute_error
+from pmdarima.arima import auto_arima
+from sklearn.metrics import mean_squared_error
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -25,18 +30,14 @@ print("Carregando os dados...")
 df = pd.read_csv("Truck_sales.csv")
 print("Dados carregados com sucesso!\n")
 
-# 2. Visualizar os dados iniciais
-print("Visualizando os dados:")
-print(df.head(), "\n")
-
-# 3. Converter coluna de data e ordenar
+# 2. Converter coluna de data e ordenar
 print("Convertendo coluna de data...")
 df["Month-Year"] = pd.to_datetime(df["Month-Year"], format="%y-%b")
 df = df.sort_values("Month-Year")
 df.set_index("Month-Year", inplace=True)
 print("Conversão concluída!\n")
 
-# 4. Exibir gráfico da série temporal
+# 3. Plot da série temporal
 plt.figure(figsize=(10, 4))
 df["Number_Trucks_Sold"].plot(title="Vendas de Caminhões ao Longo do Tempo")
 plt.xlabel("Ano")
@@ -44,37 +45,47 @@ plt.ylabel("Caminhões Vendidos")
 plt.tight_layout()
 plt.show()
 
-# 5. Separar treino e teste (ex: últimos 12 meses para teste)
+# 4. Separar treino e teste (últimos 12 meses)
 train = df.iloc[:-12]
 test = df.iloc[-12:]
 
-# 6. Treinar modelo ARIMA
-print("Treinando modelo ARIMA...")
-model = ARIMA(train, order=(2,1,2))
-model_fit = model.fit()
-print("Modelo treinado com sucesso!\n")
+# 5. Criar e treinar modelo ARIMA com sazonalidade de 12 meses
+print("Treinando modelo ARIMA com sazonalidade...\n")
+model = auto_arima(train["Number_Trucks_Sold"],
+                   seasonal=True,
+                   m=12, 
+                   trace=True,
+                   error_action='ignore',
+                   suppress_warnings=True,
+                   stepwise=True)
 
-# 7. Fazer previsões
-print("Fazendo previsões para os 12 meses finais...")
-pred = model_fit.forecast(steps=12)
+model.fit(train["Number_Trucks_Sold"])
+print("\nModelo treinado com sucesso!\n")
 
-# 8. Avaliação do modelo
-mse = mean_squared_error(test, pred)
-mae = mean_absolute_error(test, pred)
+# 6. Fazer previsões
+forecast = model.predict(n_periods=12)
+forecast = pd.DataFrame(forecast, index=test.index, columns=["Prediction"])
+
+# 7. Avaliação do modelo
+mse = mean_squared_error(test["Number_Trucks_Sold"], forecast["Prediction"])
 rmse = np.sqrt(mse)
 
 print("\nMétricas de Avaliação do Modelo:")
 print(f"MSE: {mse:.2f}")
 print(f"RMSE: {rmse:.2f}\n")
 
-# 9. Plotar previsões x valores reais
 plt.figure(figsize=(10, 4))
 plt.plot(train.index, train["Number_Trucks_Sold"], label="Treino")
 plt.plot(test.index, test["Number_Trucks_Sold"], label="Real")
-plt.plot(test.index, pred, label="Previsto", linestyle="--")
-plt.title("Previsão de Vendas de Caminhões (ARIMA)")
+plt.plot(test.index, forecast["Prediction"], label="Previsto (ARIMA sazonal)", linestyle="--")
+plt.title("Previsão de Vendas de Caminhões (ARIMA sazonal)")
 plt.xlabel("Ano")
 plt.ylabel("Nº de Caminhões Vendidos")
 plt.legend()
 plt.tight_layout()
 plt.show()
+
+# Resultado:
+# AR(2): Usa os dois últimos valores anteriores da série para prever o próximo.
+# I(1): Aplica uma diferença (transforma Y_t em Y_t - Y_t-1) para remover tendência.
+# MA(1): Usa o erro da previsão anterior para corrigir o valor atual.

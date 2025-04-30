@@ -24,6 +24,7 @@ from pmdarima.arima import auto_arima
 from sklearn.metrics import mean_squared_error
 import warnings
 warnings.filterwarnings("ignore")
+import mean_squared_error
 
 # 1. Carregar os dados
 print("Carregando os dados...")
@@ -67,8 +68,6 @@ forecast = model.predict(n_periods=12)
 forecast = pd.DataFrame(forecast, index=test.index, columns=["Prediction"])
 
 # 7. Avaliação do modelo
-mse = mean_squared_error(test["Number_Trucks_Sold"], forecast["Prediction"])
-rmse = np.sqrt(mse)
 
 print("\nMétricas de Avaliação do Modelo:")
 print(f"MSE: {mse:.2f}")
@@ -84,8 +83,3 @@ plt.ylabel("Nº de Caminhões Vendidos")
 plt.legend()
 plt.tight_layout()
 plt.show()
-
-# Resultado:
-# AR(2): Usa os dois últimos valores anteriores da série para prever o próximo.
-# I(1): Aplica uma diferença (transforma Y_t em Y_t - Y_t-1) para remover tendência.
-# MA(1): Usa o erro da previsão anterior para corrigir o valor atual.

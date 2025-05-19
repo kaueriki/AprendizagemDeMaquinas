@@ -89,3 +89,33 @@ ax.set_xlabel("PC1")
 ax.set_ylabel("PC2")
 ax.set_zlabel("PC3")
 plt.show()
+
+# Adiciona o número do cluster ao DataFrame original
+df['cluster'] = group
+
+# Calcula a média de preço por cluster
+mean_price_per_cluster = df.groupby('cluster')['Price'].mean().reset_index()
+
+# Renomeia a coluna para clareza
+mean_price_per_cluster.columns = ['Cluster', 'Preço Médio']
+
+# Exibe a tabela ordenada por preço médio
+mean_price_per_cluster = mean_price_per_cluster.sort_values(by='Preço Médio', ascending=False)
+print(mean_price_per_cluster)
+
+# === VISUALIZAÇÃO 1: Gráfico de Barras ===
+plt.figure(figsize=(10, 6))
+plt.bar(mean_price_per_cluster['Cluster'], mean_price_per_cluster['Preço Médio'], color='skyblue')
+plt.title('Preço Médio por Cluster')
+plt.xlabel('Cluster')
+plt.ylabel('Preço Médio')
+plt.xticks(mean_price_per_cluster['Cluster'])
+plt.grid(axis='y')
+plt.show()
+
+# Agrupa por cluster e calcula a média de todas as colunas numéricas
+mean_attributes_per_cluster = df.groupby('cluster').mean(numeric_only=True).reset_index()
+
+# Seleciona colunas principais para visualização
+cols_to_show = ['cluster', 'Bedrooms', 'Bathrooms', 'Area', 'Price']
+print(mean_attributes_per_cluster[cols_to_show].sort_values(by='Price', ascending=False))
